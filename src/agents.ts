@@ -88,8 +88,15 @@ export function isAgentAvailable(spec: AgentSpec): boolean {
   if (head.includes('/')) {
     return existsSync(head);
   }
-  // 纯命令名（codex 等）→ 通过 PATH 探测：Windows 下检查 .exe/.cmd/.bat
-  return findInPath(head) !== null;
+  // 纯命令名（codex 等）→ 通过 PATH 探测
+  if (findInPath(head) === null) return false;
+  // 额外检查：命令参数中的绝对路径文件也必须存在
+  for (const arg of spec.command.slice(1)) {
+    if ((arg.includes('\\') || /^[A-Za-z]:/.test(arg)) && !existsSync(arg)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /** 在 PATH 中查找可执行文件（Windows: .exe/.cmd/.bat/.ps1） */

@@ -22,6 +22,35 @@ function paint(code: keyof typeof COLORS, text: string): string {
   return useColor ? `${COLORS[code]}${text}${COLORS.reset}` : text;
 }
 
+/** 计算字符串在终端的显示宽度（CJK 字符占 2 列） */
+function displayWidth(s: string): number {
+  // 先去除 ANSI 转义序列
+  const stripped = s.replace(/\x1b\[[0-9;]*m/g, '');
+  let w = 0;
+  for (const ch of stripped) {
+    const code = ch.codePointAt(0)!;
+    // CJK 统一表意文字 + 全角符号范围（宽度 2）
+    if (
+      (code >= 0x4e00 && code <= 0x9fff) ||   // CJK 基本
+      (code >= 0x3000 && code <= 0x303f) ||   // CJK 符号
+      (code >= 0xff00 && code <= 0xffef) ||   // 全角字符
+      (code >= 0x3400 && code <= 0x4dbf) ||   // CJK 扩展 A
+      (code >= 0x20000 && code <= 0x2a6df)    // CJK 扩展 B
+    ) {
+      w += 2;
+    } else {
+      w += 1;
+    }
+  }
+  return w;
+}
+
+/** 按显示宽度右填充空格 */
+function padEnd(s: string, targetWidth: number): string {
+  const diff = targetWidth - displayWidth(s);
+  return diff > 0 ? s + ' '.repeat(diff) : s;
+}
+
 /** 单个结果的单行状态标签 */
 function statusTag(r: RunResult): string {
   if (!r.ok) return paint('red', '✗ 失败');
@@ -38,14 +67,13 @@ export function renderTable(results: RunResult[]): string {
     r.summary.replace(/\r?\n/g, ' '),
   ]);
 
-  // 计算列宽（忽略 ANSI 码长度）
-  const stripAnsi = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, '');
+  // 计算列宽（按显示宽度，处理 CJK 和 ANSI）
   const widths = headers.map((h, i) =>
-    Math.max(h.length, ...rows.map((row) => stripAnsi(row[i]).length)),
+    Math.max(displayWidth(h), ...rows.map((row) => displayWidth(row[i]))),
   );
 
   const line = (cells: string[]) =>
-    cells.map((c, i) => c.padEnd(widths[i] + 2)).join('');
+    cells.map((c, i) => padEnd(c, widths[i] + 2)).join('');
 
   const lines: string[] = [];
   lines.push(paint('bold', line(headers)));
