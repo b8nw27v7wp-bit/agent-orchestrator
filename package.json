@@ -1,0 +1,23 @@
+{
+  "name": "new-thinking",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run build && node --test",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@types/node": "^26.1.2",
+    "commander": "^15.0.0",
+    "typescript": "^7.0.2"
+  },
+  "bin": {
+    "orb": "dist/index.js"
+  }
+}
