@@ -1,15 +1,16 @@
-// runner 单元测试（node:test，零依赖；测 dist 编译产物）
+// runner 单元测试（含 stdin 模式测试）
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { runAgent, runAll } from '../dist/runner.js';
 
 /** 构造假 agent：直接跑 node -e，避免依赖真实 CLI */
-function fakeAgent(code) {
+function fakeAgent(code, extra = {}) {
   return {
     key: 'fake',
     name: 'Fake Agent',
     command: [process.execPath, '-e', code],
     shell: false,
+    ...extra,
   };
 }
 
@@ -38,7 +39,7 @@ test('超时终止：killTree 生效且快速返回', async () => {
   assert.ok(elapsed < 3000, `应在超时后立即返回，实际 ${elapsed}ms`);
 });
 
-test('stdin 置 ignore：agent 读不到 stdin 输入', async () => {
+test('stdin 置 ignore（positional 模式）：agent 读不到 stdin 输入', async () => {
   const code = `
     process.stdin.on('data', () => { console.log('GOT-STDIN'); process.exit(1); });
     setTimeout(() => { console.log('NO-STDIN'); process.exit(0); }, 400);
@@ -47,6 +48,42 @@ test('stdin 置 ignore：agent 读不到 stdin 输入', async () => {
   assert.equal(r.ok, true, `stdin 被 ignore，不应读到输入: ${r.stderr}`);
   assert.match(r.stdout, /NO-STDIN/);
   assert.doesNotMatch(r.stdout, /GOT-STDIN/);
+});
+
+test('stdin 模式：prompt 通过 stdin 传入', async () => {
+  const code = `
+    let data = '';
+    process.stdin.on('data', (chunk) => { data += chunk.toString(); });
+    process.stdin.on('end', () => { console.log('GOT:' + data.trim()); process.exit(0); });
+  `;
+  const r = await runAgent(fakeAgent(code, { promptMode: 'stdin' }), 'hello stdin', 5000);
+  assert.equal(r.ok, true);
+  assert.match(r.stdout, /GOT:hello stdin/);
+});
+
+test('flag 模式：prompt 通过 flag 传入', async () => {
+  // 用独立 .js 文件测试，确保 node 不吃掉 flag 参数
+  const { writeFileSync, unlinkSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const { tmpdir } = await import('node:os');
+  const tmpFile = join(tmpdir(), `orb-test-${Date.now()}.mjs`);
+  writeFileSync(tmpFile, `console.log('ARGS:' + JSON.stringify(process.argv.slice(2)));`);
+  try {
+    const agent = {
+      key: 'fake',
+      name: 'Fake Agent',
+      command: [process.execPath, tmpFile],
+      promptMode: 'flag',
+      promptFlag: '--prompt',
+      shell: false,
+    };
+    const r = await runAgent(agent, 'test prompt', 5000);
+    assert.equal(r.ok, true, `stderr: ${r.stderr}`);
+    assert.match(r.stdout, /--prompt/);
+    assert.match(r.stdout, /test prompt/);
+  } finally {
+    unlinkSync(tmpFile);
+  }
 });
 
 test('summary 截断到 120 字符', async () => {

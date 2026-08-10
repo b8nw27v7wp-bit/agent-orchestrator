@@ -1,17 +1,22 @@
 {
-  "name": "new-thinking",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "agent-orb",
+  "version": "2.0.0",
+  "description": "Multi-agent orchestration CLI — dispatch coding agents (Codex, Claude, Aider, etc.) in parallel",
+  "main": "dist/index.js",
   "scripts": {
     "test": "npm run build && node --test",
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "build": "tsc"
   },
-  "keywords": [],
+  "keywords": ["agent", "cli", "orchestrator", "codex", "claude", "aider", "multi-agent"],
   "author": "",
   "license": "ISC",
   "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "@types/node": "^26.1.2",
     "commander": "^15.0.0",

@@ -1,7 +1,7 @@
 // report 渲染单元测试
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { renderTable, renderSingle, renderParallel, setColorEnabled } from '../dist/report.js';
+import { renderTable, renderSingle, renderParallel, renderDiscover, renderList, setColorEnabled } from '../dist/report.js';
 
 /** 构造一条结果 */
 function result(overrides = {}) {
@@ -56,4 +56,28 @@ test('禁用颜色后无 ANSI 转义序列', () => {
   const out = renderSingle(result({ ok: false, error: '退出码 1', stderr: 'err' }));
   assert.doesNotMatch(out, /\x1b\[/);
   setColorEnabled(true);
+});
+
+test('renderDiscover 展示已安装和未检测到的 agent', () => {
+  const out = renderDiscover([
+    { key: 'codex', name: 'Codex', description: 'OpenAI CLI', found: true, version: '0.1.0', inConfig: false },
+    { key: 'aider', name: 'Aider', description: 'AI pair programming', found: false, inConfig: true },
+    { key: 'unknown', name: 'Unknown', description: 'Not installed', found: false, inConfig: false },
+  ]);
+  assert.match(out, /已安装/);
+  assert.match(out, /codex/);
+  assert.match(out, /未检测到/);
+  assert.match(out, /unknown/);
+});
+
+test('renderList 展示所有 agent 及来源', () => {
+  const out = renderList([
+    { key: 'codex', name: 'Codex', available: true, source: 'registry', command: 'codex exec' },
+    { key: 'custom', name: 'My Agent', available: false, source: 'config', command: 'my-cmd' },
+  ]);
+  assert.match(out, /已注册/);
+  assert.match(out, /codex/);
+  assert.match(out, /custom/);
+  assert.match(out, /registry/);
+  assert.match(out, /config/);
 });
