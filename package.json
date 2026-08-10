@@ -1,5 +1,5 @@
 {
-  "name": "@yufourl/agent-orb",
+  "name": "agent-orb-cli",
   "version": "2.0.0",
   "description": "Multi-agent orchestration CLI — dispatch coding agents (Codex, Claude, Aider, etc.) in parallel",
   "main": "dist/index.js",
