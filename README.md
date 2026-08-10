@@ -2,12 +2,27 @@
 
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-339933?logo=node.js)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![npm](https://img.shields.io/npm/v/agent-orb-cli)](https://www.npmjs.com/package/agent-orb-cli)
 [![Tests](https://img.shields.io/badge/tests-22%2F22-passing-brightgreen)]()
 [![License](https://img.shields.io/badge/license-ISC-blue)]()
 
 > 统一调度市面主流 coding agent CLI（25+），支持任务分发、并行执行、多 agent 结果对比。
 
 AgentOrb 对应 CrewAI / AutoGen / Agent SDK 的编排概念，但调度的是**真实 CLI agent 进程**，而非 API 调用。不预设 agent 用什么 API 或模型——只定义"怎么调"。
+
+---
+
+## 🚀 安装
+
+```bash
+# 全局安装（推荐）
+npm install -g agent-orb-cli
+
+# 或直接运行
+npx agent-orb-cli list
+```
+
+要求 Node.js >= 18。
 
 ---
 
@@ -33,22 +48,7 @@ AgentOrb 对应 CrewAI / AutoGen / Agent SDK 的编排概念，但调度的是**
 
 ---
 
-## 🚀 快速开始
-
-### 安装
-
-```bash
-git clone <repo-url>
-cd agent-orchestrator
-npm install
-npm run build
-# （可选）全局注册 orb 命令
-npm link
-```
-
-要求 Node.js >= 18。
-
-### 使用示例
+## 📖 使用示例
 
 ```bash
 # 列出所有 25 个注册 agent
@@ -61,8 +61,8 @@ orb discover --new   # 只显示未配置的新发现
 # 从注册表添加已安装的 agent 到配置
 orb add aider --from-registry
 
-# 添加自定义 agent
-orb add mybot --command "python bot.py" --prompt-mode flag --prompt-flag "--input"
+# 添加自定义 agent（支持引号包裹含空格路径）
+orb add mybot --command '"C:\Program Files\tool.exe" --mode agent' --prompt-mode flag --prompt-flag "--input"
 
 # 从配置移除
 orb remove mybot
@@ -77,8 +77,10 @@ orb all "只回复OK"
 # 多任务并行分发
 orb parallel "任务一" "任务二" "任务三"
 
-# JSON 结构化输出
+# JSON 结构化输出（适合管道）
 orb all "只回复OK" --json
+
+# 结果自动保存到 results/<时间戳>-<命令>.json
 ```
 
 ---
@@ -164,6 +166,7 @@ agent-orchestrator/
 │   ├── config.ts         # 配置文件管理 + 环境变量解析
 │   ├── discover.ts       # 自动探测已安装 agent
 │   ├── agents.ts         # agent 可用性探测 + 版本检测
+│   ├── path.ts           # PATH 查找工具（共享模块）
 │   ├── runner.ts         # spawn 子进程、超时、多 prompt 模式
 │   └── report.ts         # 终端表格渲染（CJK 对齐）
 ├── test/
@@ -183,6 +186,9 @@ agent-orchestrator/
 ## 🧪 测试
 
 ```bash
+git clone https://github.com/b8nw27v7wp-bit/agent-orchestrator.git
+cd agent-orchestrator
+npm install
 npm test
 # 22 tests, 0 failures
 ```
@@ -194,9 +200,20 @@ npm test
 - **Node.js >= 18**，TypeScript strict，ESM
 - **唯一依赖**：commander。表格/颜色/对齐全部手写
 - spawn 一律显式 argv + `shell: false`；stdin 模式 agent 通过 pipe 写入
+- `StringDecoder` 正确处理跨 chunk 的 UTF-8 多字节字符
 - 子进程输出 UTF-8 解码，超长输出截断到 2000 字符（结果文件保存全文）
 - Windows 下 `taskkill /T /F` 终止整个子进程树
 - 终端表格支持 CJK 字符宽度计算
+
+---
+
+## 📊 性能参考
+
+| Agent | 单次执行（简单任务） | 说明 |
+|-------|---------------------|------|
+| CodeBuddy (hy3) | ~10s | WorkBuddy 内置，速度快 |
+| Codex (DeepSeek) | ~20s | 走 API，含模型推理 |
+| Claude Code | ~15-30s | 取决于任务复杂度 |
 
 ---
 
