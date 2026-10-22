@@ -8,7 +8,8 @@ import { REGISTRY, findRegistryEntry } from '../dist/registry.js';
 test('REGISTRY 包含 20+ 个注册 agent', () => {
   assert.ok(REGISTRY.length >= 20, `注册表应有 20+ agent，实际 ${REGISTRY.length}`);
   const keys = REGISTRY.map((e) => e.key);
-  assert.ok(keys.includes('codebuddy'));
+  // 常驻 agent 必须始终注册；codebuddy 依赖本机 WorkBuddy 安装，只在探测到时注入
+  // （见 registry.ts 的 CODEBUDDY_SCRIPT 条件展开），因此不在此断言存在。
   assert.ok(keys.includes('codex'));
   assert.ok(keys.includes('claude'));
   assert.ok(keys.includes('aider'));

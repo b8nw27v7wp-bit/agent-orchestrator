@@ -6,7 +6,7 @@
 [![Tests](https://img.shields.io/badge/tests-22%2F22-passing-brightgreen)]()
 [![License](https://img.shields.io/badge/license-ISC-blue)]()
 
-> 统一调度市面主流 coding agent CLI（25+），支持任务分发、并行执行、多 agent 结果对比。
+> 统一调度市面主流 coding agent CLI（24~25 个，取决于本机是否装 WorkBuddy），支持任务分发、并行执行、多 agent 结果对比。
 
 AgentOrb 对应 CrewAI / AutoGen / Agent SDK 的编排概念，但调度的是**真实 CLI agent 进程**，而非 API 调用。不预设 agent 用什么 API 或模型——只定义"怎么调"。
 
@@ -30,7 +30,7 @@ npx agent-orb-cli list
 
 | 命令 | 说明 |
 |------|------|
-| `orb list` | 列出所有 25 个注册 agent 及状态、版本、来源 |
+| `orb list` | 列出所有预定义 agent（25 条，CodeBuddy 需装有 WorkBuddy 才注册，否则 24）及状态、版本、来源 |
 | `orb discover` | 自动探测系统已安装的 agent |
 | `orb add <key>` | 添加 agent 到配置文件（注册表或自定义） |
 | `orb remove <key>` | 从配置文件移除 agent |
@@ -51,7 +51,7 @@ npx agent-orb-cli list
 ## 📖 使用示例
 
 ```bash
-# 列出所有 25 个注册 agent
+# 列出所有预定义 agent（未装 WorkBuddy 时 24 个）
 orb list
 
 # 探测系统已安装的 agent
@@ -85,7 +85,7 @@ orb all "只回复OK" --json
 
 ---
 
-## 🤖 内置注册表（25 个 Agent）
+## 🤖 内置注册表（25 个预定义 Agent，CodeBuddy 按本机 WorkBuddy 探测注册）
 
 | key | 名称 | prompt 模式 | 探测方式 |
 |-----|------|------------|----------|
@@ -143,7 +143,7 @@ orb all "只回复OK" --json
 1. **配置文件** — 用户显式添加
 2. **环境变量** `ORB_<KEY>_CMD` — 覆盖注册表 agent 命令
 3. **环境变量** `ORB_AGENTS_EXTRA` — 注册额外自定义 agent
-4. **注册表默认值** — 25 个预定义 agent
+4. **注册表默认值** — 25 个预定义 agent（`codebuddy` 仅在探测到 WorkBuddy 时注入）
 
 ### Prompt 传递模式
 
@@ -162,7 +162,7 @@ agent-orchestrator/
 ├── src/
 │   ├── index.ts          # commander CLI 入口（bin: orb）
 │   ├── types.ts          # 类型定义（AgentSpec, RegistryEntry, RunResult...）
-│   ├── registry.ts       # 25 个预定义 agent 注册表
+│   ├── registry.ts       # 25 个预定义 agent 注册表（codebuddy 条件注入）
 │   ├── config.ts         # 配置文件管理 + 环境变量解析
 │   ├── discover.ts       # 自动探测已安装 agent
 │   ├── agents.ts         # agent 可用性探测 + 版本检测
